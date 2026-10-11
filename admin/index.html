@@ -1,0 +1,394 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>VOIDROLL Yönetim</title>
+<style>
+  :root {
+    --bg: #0b0018; --card: #160829; --line: #3a1d63; --text: #efe9ff; --dim: #b9a8d9;
+    --pink: #ff33b8; --cyan: #33e0ff; --gold: #ffcc40; --red: #ff3355; --green: #59ff99;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  header { display: flex; align-items: center; gap: 16px; padding: 14px 16px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+  header h1 { margin: 0; font-size: 22px; letter-spacing: 3px; text-shadow: 0 0 14px var(--pink); }
+  header .who { margin-left: auto; color: var(--dim); font-size: 13px; }
+  main { max-width: 1100px; margin: 0 auto; padding: 16px; }
+  nav { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; }
+  nav button { background: var(--card); color: var(--dim); border: 1px solid var(--line); }
+  nav button.on { color: var(--text); border-color: var(--pink); box-shadow: 0 0 10px #ff33b855; }
+  button { font: inherit; padding: 8px 14px; border-radius: 10px; border: 1px solid var(--cyan); background: transparent; color: var(--cyan); cursor: pointer; }
+  button:hover { background: #33e0ff18; }
+  button.danger { border-color: var(--red); color: var(--red); }
+  button.danger:hover { background: #ff335518; }
+  button.ok { border-color: var(--green); color: var(--green); }
+  button.small { padding: 4px 9px; font-size: 13px; }
+  button:disabled { opacity: .45; cursor: default; }
+  input, textarea, select { font: inherit; color: var(--text); background: #0f0520; border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; }
+  input:focus, textarea:focus, select:focus { outline: none; border-color: var(--cyan); }
+  textarea { width: 100%; min-height: 90px; resize: vertical; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px; margin-bottom: 16px; }
+  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .grow { flex: 1; min-width: 160px; }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+  .stat { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px; }
+  .stat b { display: block; font-size: 28px; color: var(--gold); }
+  .stat span { color: var(--dim); font-size: 13px; }
+  .tablewrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid #2a1448; vertical-align: middle; white-space: nowrap; }
+  th { color: var(--dim); font-weight: 600; font-size: 13px; }
+  td.wrap { white-space: normal; }
+  .tag { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 12px; border: 1px solid; }
+  .tag.ban { color: var(--red); border-color: var(--red); }
+  .tag.on { color: var(--green); border-color: var(--green); }
+  .tag.off { color: var(--dim); border-color: var(--dim); }
+  .dim { color: var(--dim); }
+  .msg { min-height: 22px; color: var(--gold); }
+  .err { color: var(--red); }
+  #login { max-width: 380px; margin: 60px auto; }
+  #login input { width: 100%; margin-bottom: 10px; }
+  .hidden { display: none !important; }
+  @media (max-width: 640px) { main { padding: 12px; } th, td { font-size: 13px; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>VOIDROLL</h1><span class="dim">Yönetim Paneli</span>
+  <span class="who" id="who"></span>
+  <button class="small hidden" id="logout">Çıkış</button>
+</header>
+<main>
+  <!-- Giriş -->
+  <section id="login" class="card">
+    <h2 style="margin-top:0">Yönetici girişi</h2>
+    <p class="dim">Supabase'de oluşturduğun yönetici e-posta ve şifresiyle gir.</p>
+    <input id="email" type="email" placeholder="E-posta" autocomplete="username">
+    <input id="password" type="password" placeholder="Şifre" autocomplete="current-password">
+    <button id="loginBtn" class="ok" style="width:100%">Giriş yap</button>
+    <p class="msg" id="loginMsg"></p>
+  </section>
+
+  <!-- Panel -->
+  <section id="app" class="hidden">
+    <nav id="tabs">
+      <button data-tab="dash" class="on">Özet</button>
+      <button data-tab="players">Oyuncular</button>
+      <button data-tab="board">Sıralama</button>
+      <button data-tab="reports">Şikâyetler</button>
+      <button data-tab="news">Duyurular</button>
+      <button data-tab="words">Yasak kelimeler</button>
+    </nav>
+    <p class="msg" id="msg"></p>
+
+    <div data-view="dash">
+      <div class="stats" id="stats"></div>
+    </div>
+
+    <div data-view="players" class="hidden">
+      <div class="card">
+        <div class="row">
+          <input id="pq" class="grow" placeholder="İsimde ara…">
+          <label class="dim"><input type="checkbox" id="pBanned"> sadece engelliler</label>
+          <button id="pSearch">Ara</button>
+        </div>
+      </div>
+      <div class="card tablewrap"><table>
+        <thead><tr><th>İsim</th><th>Platform</th><th>En iyi skorlar</th><th>Son görülme</th><th>Kayıt</th><th>Durum</th><th></th></tr></thead>
+        <tbody id="pBody"></tbody>
+      </table>
+      <div class="row" style="margin-top:10px"><button class="small" id="pPrev">‹ Önceki</button><span class="dim" id="pPage"></span><button class="small" id="pNext">Sonraki ›</button></div>
+      </div>
+    </div>
+
+    <div data-view="board" class="hidden">
+      <div class="card row">
+        <select id="bMode">
+          <option value="classic">Klasik</option><option value="illusion">İllüzyon</option>
+          <option value="blackout">Blackout</option><option value="nightmare">Kâbus</option>
+        </select>
+        <button id="bLoad">Yenile</button>
+      </div>
+      <div class="card tablewrap"><table>
+        <thead><tr><th>#</th><th>İsim</th><th>Skor</th><th>Süre</th><th>Tarih</th><th></th></tr></thead>
+        <tbody id="bBody"></tbody>
+      </table></div>
+    </div>
+
+    <div data-view="reports" class="hidden">
+      <div class="card row">
+        <label class="dim"><input type="checkbox" id="rAll"> çözülenleri de göster</label>
+        <button id="rLoad">Yenile</button>
+      </div>
+      <div class="card tablewrap"><table>
+        <thead><tr><th>Şikâyet edilen</th><th>Şikâyet eden</th><th>Sebep</th><th>Tarih</th><th>Durum</th><th></th></tr></thead>
+        <tbody id="rBody"></tbody>
+      </table></div>
+    </div>
+
+    <div data-view="news" class="hidden">
+      <div class="card">
+        <h3 style="margin-top:0" id="nFormTitle">Yeni duyuru</h3>
+        <input id="nTitle" placeholder="Başlık (isteğe bağlı)" style="width:100%;margin-bottom:8px" maxlength="60">
+        <textarea id="nBody" placeholder="Duyuru metni — oyunu açan herkes ana menüde görür" maxlength="300"></textarea>
+        <div class="row" style="margin-top:8px">
+          <label class="dim">Bitiş (isteğe bağlı): <input type="datetime-local" id="nExpires"></label>
+          <label class="dim"><input type="checkbox" id="nActive" checked> yayında</label>
+          <span class="grow"></span>
+          <button id="nCancel" class="small hidden">Vazgeç</button>
+          <button id="nSave" class="ok">Kaydet</button>
+        </div>
+      </div>
+      <div class="card tablewrap"><table>
+        <thead><tr><th>Başlık</th><th>Metin</th><th>Durum</th><th>Bitiş</th><th>Oluşturma</th><th></th></tr></thead>
+        <tbody id="nBodyList"></tbody>
+      </table></div>
+    </div>
+
+    <div data-view="words" class="hidden">
+      <div class="card">
+        <p class="dim" style="margin-top:0">Oyuncu adlarında geçemeyecek kelimeler (küçük harf, Türkçe karakter yerine i/s/g/u/o/c). Boşluk, nokta ve 0/1/3/4/5/7 hileleri otomatik yakalanır.</p>
+        <div class="row"><input id="wNew" class="grow" placeholder="kelime"><button id="wAdd" class="ok">Ekle</button></div>
+      </div>
+      <div class="card" id="wList"></div>
+    </div>
+  </section>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+// ---- Ayarlar: Supabase proje adresi ve herkese açık (anon/publishable) anahtar.
+// Bu anahtar gizli DEĞİLDİR; yetkiyi veritabanındaki RLS kuralları ve "admins" tablosu verir.
+const SUPABASE_URL = "https://yrgrezgmupoqnocaomia.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_LsmuPSowNN1Tp3qAb6qUqw_nT2tdceU";
+const PAGE = 50;
+const MODES = { classic: "Klasik", illusion: "İllüzyon", blackout: "Blackout", nightmare: "Kâbus" };
+
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const $ = (id) => document.getElementById(id);
+let pPage = 0, editingNews = null;
+
+// ---- küçük yardımcılar (kullanıcı metni HER ZAMAN textContent ile basılır → XSS yok)
+function el(tag, props = {}, ...kids) {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(props)) {
+    if (k === "on") for (const [ev, fn] of Object.entries(v)) e.addEventListener(ev, fn);
+    else if (k === "class") e.className = v;
+    else e[k] = v;
+  }
+  for (const k of kids) e.append(k instanceof Node ? k : document.createTextNode(k ?? ""));
+  return e;
+}
+const btn = (text, fn, cls = "small") => el("button", { class: cls, textContent: text, on: { click: fn } });
+const fmtDate = (s) => s ? new Date(s).toLocaleString("tr-TR", { dateStyle: "short", timeStyle: "short" }) : "—";
+const fmtNum = (n) => Number(n || 0).toLocaleString("tr-TR");
+function say(text, isErr = false) { const m = $("msg"); m.textContent = text; m.className = "msg" + (isErr ? " err" : ""); }
+function check(res) { if (res.error) { say("Hata: " + res.error.message, true); throw res.error; } return res.data; }
+
+// ---- giriş / oturum
+async function start() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) await enter(session.user);
+}
+async function enter(user) {
+  const { data: admin } = await sb.rpc("is_admin");
+  if (!admin) {
+    $("loginMsg").textContent = "Bu hesap yönetici değil.";
+    await sb.auth.signOut();
+    return;
+  }
+  $("login").classList.add("hidden");
+  $("app").classList.remove("hidden");
+  $("logout").classList.remove("hidden");
+  $("who").textContent = user.email || "";
+  show("dash");
+}
+$("loginBtn").onclick = async () => {
+  $("loginMsg").textContent = "…";
+  const { data, error } = await sb.auth.signInWithPassword({ email: $("email").value.trim(), password: $("password").value });
+  if (error) { $("loginMsg").textContent = "Giriş başarısız: " + error.message; return; }
+  $("password").value = "";
+  await enter(data.user);
+};
+$("password").addEventListener("keydown", (e) => { if (e.key === "Enter") $("loginBtn").click(); });
+$("logout").onclick = async () => { await sb.auth.signOut(); location.reload(); };
+
+// ---- sekmeler
+document.querySelectorAll("#tabs button").forEach((b) => b.onclick = () => show(b.dataset.tab));
+function show(tab, keepMsg = false) {
+  document.querySelectorAll("#tabs button").forEach((b) => b.classList.toggle("on", b.dataset.tab === tab));
+  document.querySelectorAll("[data-view]").forEach((v) => v.classList.toggle("hidden", v.dataset.view !== tab));
+  if (!keepMsg) say("");
+  ({ dash: loadStats, players: loadPlayers, board: loadBoard, reports: loadReports, news: loadNews, words: loadWords })[tab]();
+}
+
+// ---- özet
+async function loadStats() {
+  const s = check(await sb.rpc("admin_stats"));
+  const items = [["Toplam oyuncu", s.players], ["Son 7 günde aktif", s.active_7d], ["Engelli", s.banned], ["Kayıtlı skor", s.scores], ["Açık şikâyet", s.open_reports]];
+  $("stats").replaceChildren(...items.map(([k, v]) => el("div", { class: "stat" }, el("b", { textContent: fmtNum(v) }), el("span", { textContent: k }))));
+}
+
+// ---- oyuncular (listele / ara / düzenle / engelle / sil)
+async function loadPlayers() {
+  let q = sb.from("players").select("id,nickname,platform,banned,created_at,last_seen,scores(mode,score)", { count: "exact" })
+    .order("last_seen", { ascending: false }).range(pPage * PAGE, pPage * PAGE + PAGE - 1);
+  const term = $("pq").value.trim();
+  if (term) q = q.ilike("nickname", `%${term.replace(/[%_]/g, "")}%`);
+  if ($("pBanned").checked) q = q.eq("banned", true);
+  const res = await q;
+  const rows = check(res);
+  const pages = Math.max(1, Math.ceil((res.count || 0) / PAGE));
+  $("pPage").textContent = `Sayfa ${pPage + 1} / ${pages} · ${fmtNum(res.count)} oyuncu`;
+  $("pPrev").disabled = pPage === 0;
+  $("pNext").disabled = pPage + 1 >= pages;
+  $("pBody").replaceChildren(...rows.map((p) => el("tr", {},
+    el("td", { textContent: p.nickname }),
+    el("td", { class: "dim", textContent: p.platform || "—" }),
+    el("td", { class: "wrap dim", textContent: (p.scores || []).map((s) => `${MODES[s.mode] || s.mode}: ${fmtNum(s.score)}`).join(" · ") || "—" }),
+    el("td", { class: "dim", textContent: fmtDate(p.last_seen) }),
+    el("td", { class: "dim", textContent: fmtDate(p.created_at) }),
+    el("td", {}, p.banned ? el("span", { class: "tag ban", textContent: "engelli" }) : el("span", { class: "tag on", textContent: "aktif" })),
+    el("td", {}, el("div", { class: "row" },
+      btn("İsim", () => renamePlayer(p)),
+      btn(p.banned ? "Engeli kaldır" : "Engelle", () => setBan(p, !p.banned), p.banned ? "small ok" : "small danger"),
+      btn("Sil", () => deletePlayer(p), "small danger"))),
+  )));
+}
+$("pSearch").onclick = () => { pPage = 0; loadPlayers(); };
+$("pq").addEventListener("keydown", (e) => { if (e.key === "Enter") $("pSearch").click(); });
+$("pBanned").onchange = () => { pPage = 0; loadPlayers(); };
+$("pPrev").onclick = () => { pPage = Math.max(0, pPage - 1); loadPlayers(); };
+$("pNext").onclick = () => { pPage++; loadPlayers(); };
+
+async function renamePlayer(p) {
+  const n = prompt(`"${p.nickname}" için yeni isim (3–16 karakter):`, p.nickname);
+  if (!n || n.trim() === p.nickname) return;
+  const name = n.trim();
+  if (name.length < 3 || name.length > 16) return say("İsim 3–16 karakter olmalı.", true);
+  check(await sb.from("players").update({ nickname: name }).eq("id", p.id));
+  say(`İsim "${name}" olarak değiştirildi.`);
+  refreshCurrent();
+}
+async function setBan(p, banned) {
+  if (banned && !confirm(`"${p.nickname}" engellensin mi? Sıralamadan gizlenir, skor gönderemez, isim değiştiremez.`)) return;
+  check(await sb.from("players").update({ banned }).eq("id", p.id));
+  say(banned ? `"${p.nickname}" engellendi.` : `"${p.nickname}" engeli kaldırıldı.`);
+  refreshCurrent();
+}
+async function deletePlayer(p) {
+  if (!confirm(`"${p.nickname}" ve tüm skorları KALICI olarak silinsin mi?\n(Oyunu tekrar açarsa yeni bir otomatik isimle başlar. Kalıcı engel için "Engelle"yi kullan.)`)) return;
+  check(await sb.from("players").delete().eq("id", p.id));
+  say(`"${p.nickname}" silindi.`);
+  refreshCurrent();
+}
+
+// ---- sıralama (mod bazında, skor silme)
+async function loadBoard() {
+  const mode = $("bMode").value;
+  const rows = check(await sb.from("scores").select("player_id,score,duration,updated_at,players(nickname,banned)")
+    .eq("mode", mode).order("score", { ascending: false }).limit(100));
+  $("bBody").replaceChildren(...rows.map((s, i) => el("tr", {},
+    el("td", { class: "dim", textContent: "#" + (i + 1) }),
+    el("td", {}, s.players?.nickname ?? "?", s.players?.banned ? el("span", { class: "tag ban", textContent: " engelli", style: "margin-left:6px" }) : ""),
+    el("td", { textContent: fmtNum(s.score) }),
+    el("td", { class: "dim", textContent: Math.round(s.duration) + " sn" }),
+    el("td", { class: "dim", textContent: fmtDate(s.updated_at) }),
+    el("td", {}, btn("Skoru sil", async () => {
+      if (!confirm(`${s.players?.nickname ?? "?"} adlı oyuncunun ${MODES[mode]} skoru (${fmtNum(s.score)}) silinsin mi?`)) return;
+      check(await sb.from("scores").delete().eq("player_id", s.player_id).eq("mode", mode));
+      say("Skor silindi."); loadBoard();
+    }, "small danger")),
+  )));
+  if (!rows.length) $("bBody").replaceChildren(el("tr", {}, el("td", { colSpan: 6, class: "dim", textContent: "Bu modda henüz skor yok." })));
+}
+$("bLoad").onclick = loadBoard;
+$("bMode").onchange = loadBoard;
+
+// ---- şikâyetler
+async function loadReports() {
+  let q = sb.from("reports").select("id,reason,resolved,created_at,reporter:players!reports_reporter_fkey(nickname),target:players!reports_reported_fkey(id,nickname,banned)")
+    .order("created_at", { ascending: false }).limit(200);
+  if (!$("rAll").checked) q = q.eq("resolved", false);
+  const rows = check(await q);
+  $("rBody").replaceChildren(...rows.map((r) => el("tr", {},
+    el("td", { textContent: r.target?.nickname ?? "(silinmiş)" }),
+    el("td", { class: "dim", textContent: r.reporter?.nickname ?? "(silinmiş)" }),
+    el("td", { class: "dim", textContent: r.reason || "—" }),
+    el("td", { class: "dim", textContent: fmtDate(r.created_at) }),
+    el("td", {}, el("span", { class: "tag " + (r.resolved ? "off" : "on"), textContent: r.resolved ? "çözüldü" : "açık" })),
+    el("td", {}, el("div", { class: "row" },
+      r.target ? btn("İsim", () => renamePlayer(r.target)) : "",
+      r.target && !r.target.banned ? btn("Engelle", () => setBan(r.target, true), "small danger") : "",
+      !r.resolved ? btn("Çözüldü", async () => { check(await sb.from("reports").update({ resolved: true }).eq("id", r.id)); loadReports(); }, "small ok") : "",
+      btn("Sil", async () => { check(await sb.from("reports").delete().eq("id", r.id)); loadReports(); }, "small danger"))),
+  )));
+  if (!rows.length) $("rBody").replaceChildren(el("tr", {}, el("td", { colSpan: 6, class: "dim", textContent: "Şikâyet yok." })));
+}
+$("rLoad").onclick = loadReports;
+$("rAll").onchange = loadReports;
+
+// ---- duyurular (oluştur / düzenle / yayından kaldır / sil)
+async function loadNews() {
+  const rows = check(await sb.from("announcements").select("*").order("created_at", { ascending: false }));
+  $("nBodyList").replaceChildren(...rows.map((a) => el("tr", {},
+    el("td", { textContent: a.title || "—" }),
+    el("td", { class: "wrap", textContent: a.body }),
+    el("td", {}, el("span", { class: "tag " + (a.active ? "on" : "off"), textContent: a.active ? "yayında" : "kapalı" })),
+    el("td", { class: "dim", textContent: fmtDate(a.expires_at) }),
+    el("td", { class: "dim", textContent: fmtDate(a.created_at) }),
+    el("td", {}, el("div", { class: "row" },
+      btn("Düzenle", () => editNews(a)),
+      btn(a.active ? "Kapat" : "Yayınla", async () => { check(await sb.from("announcements").update({ active: !a.active }).eq("id", a.id)); loadNews(); }, a.active ? "small" : "small ok"),
+      btn("Sil", async () => { if (!confirm("Duyuru silinsin mi?")) return; check(await sb.from("announcements").delete().eq("id", a.id)); loadNews(); }, "small danger"))),
+  )));
+  if (!rows.length) $("nBodyList").replaceChildren(el("tr", {}, el("td", { colSpan: 6, class: "dim", textContent: "Henüz duyuru yok." })));
+}
+function editNews(a) {
+  editingNews = a ? a.id : null;
+  $("nFormTitle").textContent = a ? "Duyuruyu düzenle" : "Yeni duyuru";
+  $("nTitle").value = a?.title ?? "";
+  $("nBody").value = a?.body ?? "";
+  $("nActive").checked = a ? a.active : true;
+  $("nExpires").value = a?.expires_at ? new Date(new Date(a.expires_at).getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16) : "";
+  $("nCancel").classList.toggle("hidden", !a);
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+$("nCancel").onclick = () => editNews(null);
+$("nSave").onclick = async () => {
+  const body = $("nBody").value.trim();
+  if (!body) return say("Duyuru metni boş olamaz.", true);
+  const row = { title: $("nTitle").value.trim(), body, active: $("nActive").checked, expires_at: $("nExpires").value ? new Date($("nExpires").value).toISOString() : null };
+  if (editingNews) check(await sb.from("announcements").update(row).eq("id", editingNews));
+  else check(await sb.from("announcements").insert(row));
+  say(editingNews ? "Duyuru güncellendi." : "Duyuru yayınlandı. Oyuncular oyunu bir sonraki açışlarında görür.");
+  editNews(null);
+  loadNews();
+};
+
+// ---- yasak kelimeler
+async function loadWords() {
+  const rows = check(await sb.from("banned_words").select("word").order("word"));
+  $("wList").replaceChildren(...(rows.length ? rows.map((w) => el("span", { class: "row", style: "display:inline-flex;margin:4px 10px 4px 0" },
+    el("span", { textContent: w.word }),
+    btn("×", async () => { check(await sb.from("banned_words").delete().eq("word", w.word)); loadWords(); }, "small danger"))) : [el("span", { class: "dim", textContent: "Liste boş." })]));
+}
+$("wAdd").onclick = async () => {
+  const w = $("wNew").value.trim().toLowerCase();
+  if (w.length < 3) return say("Kelime en az 3 harf olmalı (kısa kelimeler masum isimleri de engeller).", true);
+  check(await sb.from("banned_words").insert({ word: w }));
+  $("wNew").value = "";
+  loadWords();
+};
+
+function refreshCurrent() {
+  const tab = document.querySelector("#tabs button.on")?.dataset.tab || "dash";
+  show(tab, true);
+}
+
+start();
+</script>
+</body>
+</html>
