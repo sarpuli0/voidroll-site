@@ -51,6 +51,12 @@
   #login { max-width: 380px; margin: 60px auto; }
   #login input { width: 100%; margin-bottom: 10px; }
   .hidden { display: none !important; }
+  input[type=color] { width: 46px; height: 36px; padding: 2px; vertical-align: middle; cursor: pointer; }
+  input[type=range] { padding: 0; accent-color: var(--pink); }
+  #modal { position: fixed; inset: 0; background: #000a; display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 10; }
+  #modal .card { width: 100%; max-width: 460px; margin: 0; }
+  #modal label { display: block; margin: 10px 0 4px; color: var(--dim); font-size: 13px; }
+  #modal input, #modal select, #modal textarea { width: 100%; }
   @media (max-width: 640px) { main { padding: 12px; } th, td { font-size: 13px; } }
 </style>
 </head>
@@ -78,6 +84,8 @@
       <button data-tab="players">Oyuncular</button>
       <button data-tab="board">Sıralama</button>
       <button data-tab="reports">Şikâyetler</button>
+      <button data-tab="msgs">Mesajlar</button>
+      <button data-tab="gifts">Hediye Top</button>
       <button data-tab="news">Duyurular</button>
       <button data-tab="words">Yasak kelimeler</button>
     </nav>
@@ -90,13 +98,13 @@
     <div data-view="players" class="hidden">
       <div class="card">
         <div class="row">
-          <input id="pq" class="grow" placeholder="İsimde ara…">
+          <input id="pq" class="grow" placeholder="İsim ya da ID (VR-…) ara…">
           <label class="dim"><input type="checkbox" id="pBanned"> sadece engelliler</label>
           <button id="pSearch">Ara</button>
         </div>
       </div>
       <div class="card tablewrap"><table>
-        <thead><tr><th>İsim</th><th>Platform</th><th>En iyi skorlar</th><th>Son görülme</th><th>Kayıt</th><th>Durum</th><th></th></tr></thead>
+        <thead><tr><th>ID</th><th>İsim</th><th>Platform</th><th>En iyi skorlar</th><th>Son görülme</th><th>Kayıt</th><th>Durum</th><th></th></tr></thead>
         <tbody id="pBody"></tbody>
       </table>
       <div class="row" style="margin-top:10px"><button class="small" id="pPrev">‹ Önceki</button><span class="dim" id="pPage"></span><button class="small" id="pNext">Sonraki ›</button></div>
@@ -108,6 +116,7 @@
         <select id="bMode">
           <option value="classic">Klasik</option><option value="illusion">İllüzyon</option>
           <option value="blackout">Blackout</option><option value="nightmare">Kâbus</option>
+          <option value="wake">Uyan</option>
         </select>
         <button id="bLoad">Yenile</button>
       </div>
@@ -125,6 +134,63 @@
       <div class="card tablewrap"><table>
         <thead><tr><th>Şikâyet edilen</th><th>Şikâyet eden</th><th>Sebep</th><th>Tarih</th><th>Durum</th><th></th></tr></thead>
         <tbody id="rBody"></tbody>
+      </table></div>
+    </div>
+
+    <div data-view="msgs" class="hidden">
+      <div class="card">
+        <h3 style="margin-top:0">Mesaj gönder</h3>
+        <p class="dim" style="margin-top:0">Oyuncular oyunda <b>MESAJLAR</b> ekranında görür (ana menüde okunmamış sayısı çıkar). Kişiye özel mesaj için oyuncunun adını yaz; boş bırakırsan <b>herkese</b> gider.</p>
+        <input id="mTo" placeholder="Alıcı oyuncu adı (boş = herkese)" style="width:100%;margin-bottom:8px">
+        <input id="mTitle" placeholder="Başlık (isteğe bağlı)" style="width:100%;margin-bottom:8px" maxlength="60">
+        <textarea id="mBody" placeholder="Mesaj" maxlength="500"></textarea>
+        <div class="row" style="margin-top:8px">
+          <label class="dim">Bitiş (isteğe bağlı): <input type="datetime-local" id="mExpires"></label>
+          <span class="grow"></span>
+          <button id="mSend" class="ok">Gönder</button>
+        </div>
+      </div>
+      <div class="card tablewrap"><table>
+        <thead><tr><th>Alıcı</th><th>Başlık</th><th>Mesaj</th><th>Tarih</th><th>Bitiş</th><th></th></tr></thead>
+        <tbody id="mList"></tbody>
+      </table></div>
+    </div>
+
+    <div data-view="gifts" class="hidden">
+      <div class="card">
+        <h3 style="margin-top:0">Özel top tasarla ve hediye et</h3>
+        <p class="dim" style="margin-top:0">Top sadece seçtiğin oyuncuya gider. Oyuncu oyunu açınca "Sana özel hediye!" ekranı çıkar ve top MARKET → HEDİYE'de görünür. Toplar sadece görünüştür.</p>
+        <div class="row" style="align-items:flex-start;gap:20px">
+          <div style="flex:1;min-width:260px">
+            <label class="dim">Alıcı oyuncu ID'si</label><input id="gTo" placeholder="VR-XXXXXX" style="width:100%">
+            <label class="dim">Topun adı</label><input id="gName" maxlength="24" placeholder="ör. Şampiyon Topu" style="width:100%">
+            <label class="dim">Topun üstündeki yazı (en fazla 14 harf)</label><input id="gText" maxlength="14" placeholder="ör. ŞAMPİYON" style="width:100%">
+            <div class="row">
+              <label class="dim">Gövde <input type="color" id="gBase" value="#14062e"></label>
+              <label class="dim">Desen <input type="color" id="gPat" value="#ffd040"></label>
+              <label class="dim">Parlama <input type="color" id="gRim" value="#ffcc33"></label>
+              <label class="dim">Yazı <input type="color" id="gTextColor" value="#ffe14d"></label>
+              <label class="dim">İz <input type="color" id="gTrail" value="#ffcc33"></label>
+            </div>
+            <label class="dim">Desen</label>
+            <select id="gPattern" style="width:100%">
+              <option value="0">Bantlar</option><option value="1">Izgara</option><option value="2">Girdap</option>
+              <option value="3">Benekler</option><option value="4" selected>Düz</option><option value="5">Petek</option>
+              <option value="6">Çatlak (lav/kristal)</option><option value="7">Galaksi yıldızları</option>
+            </select>
+            <div id="gSliders"></div>
+            <label class="dim">Oyuncuya not (hediye ekranında görünür)</label><input id="gNote" maxlength="120" placeholder="ör. Turnuva birincisine özel" style="width:100%">
+            <div class="row" style="margin-top:10px"><span class="grow"></span><button id="gSend" class="ok">Hediye et</button></div>
+          </div>
+          <div style="text-align:center">
+            <canvas id="gPreview" width="260" height="260" style="background:#0b0018;border-radius:16px;border:1px solid var(--line)"></canvas>
+            <div class="dim" style="font-size:12px">önizleme (oyunda ışıklar hareketli)</div>
+          </div>
+        </div>
+      </div>
+      <div class="card tablewrap"><table>
+        <thead><tr><th>Oyuncu</th><th>Top</th><th>Yazı</th><th>Not</th><th>Tarih</th><th>Durum</th><th></th></tr></thead>
+        <tbody id="gList"></tbody>
       </table></div>
     </div>
 
@@ -164,7 +230,7 @@
 const SUPABASE_URL = "https://yrgrezgmupoqnocaomia.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_LsmuPSowNN1Tp3qAb6qUqw_nT2tdceU";
 const PAGE = 50;
-const MODES = { classic: "Klasik", illusion: "İllüzyon", blackout: "Blackout", nightmare: "Kâbus" };
+const MODES = { classic: "Klasik", illusion: "İllüzyon", blackout: "Blackout", nightmare: "Kâbus", wake: "Uyan" };
 
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const $ = (id) => document.getElementById(id);
@@ -221,23 +287,26 @@ function show(tab, keepMsg = false) {
   document.querySelectorAll("#tabs button").forEach((b) => b.classList.toggle("on", b.dataset.tab === tab));
   document.querySelectorAll("[data-view]").forEach((v) => v.classList.toggle("hidden", v.dataset.view !== tab));
   if (!keepMsg) say("");
-  ({ dash: loadStats, players: loadPlayers, board: loadBoard, reports: loadReports, news: loadNews, words: loadWords })[tab]();
+  ({ dash: loadStats, players: loadPlayers, board: loadBoard, reports: loadReports, msgs: loadMsgs, gifts: loadGifts, news: loadNews, words: loadWords })[tab]();
 }
 
 // ---- özet
 async function loadStats() {
   const s = check(await sb.rpc("admin_stats"));
-  const items = [["Toplam oyuncu", s.players], ["Son 7 günde aktif", s.active_7d], ["Engelli", s.banned], ["Kayıtlı skor", s.scores], ["Açık şikâyet", s.open_reports]];
+  const items = [["Toplam oyuncu", s.players], ["Son 7 günde aktif", s.active_7d], ["Banlı", s.banned], ["Kayıtlı skor", s.scores], ["Açık şikâyet", s.open_reports], ["Gönderilen mesaj", s.messages ?? 0]];
   $("stats").replaceChildren(...items.map(([k, v]) => el("div", { class: "stat" }, el("b", { textContent: fmtNum(v) }), el("span", { textContent: k }))));
 }
 
 // ---- oyuncular (listele / ara / düzenle / engelle / sil)
 async function loadPlayers() {
-  let q = sb.from("players").select("id,nickname,platform,banned,created_at,last_seen,scores(mode,score)", { count: "exact" })
+  let q = sb.from("players").select("id,public_id,nickname,platform,banned,banned_until,ban_reason,created_at,last_seen,scores(mode,score)", { count: "exact" })
     .order("last_seen", { ascending: false }).range(pPage * PAGE, pPage * PAGE + PAGE - 1);
   const term = $("pq").value.trim();
-  if (term) q = q.ilike("nickname", `%${term.replace(/[%_]/g, "")}%`);
-  if ($("pBanned").checked) q = q.eq("banned", true);
+  if (term) {
+    const t = term.replace(/[%_,()]/g, "");
+    q = /^vr-?/i.test(t) ? q.ilike("public_id", `%${t.toUpperCase()}%`) : q.ilike("nickname", `%${t}%`);
+  }
+  if ($("pBanned").checked) q = q.eq("banned", true).or(`banned_until.is.null,banned_until.gt.${new Date().toISOString()}`);
   const res = await q;
   const rows = check(res);
   const pages = Math.max(1, Math.ceil((res.count || 0) / PAGE));
@@ -245,15 +314,19 @@ async function loadPlayers() {
   $("pPrev").disabled = pPage === 0;
   $("pNext").disabled = pPage + 1 >= pages;
   $("pBody").replaceChildren(...rows.map((p) => el("tr", {},
+    el("td", {}, el("code", { textContent: p.public_id || "—", style: "color:var(--cyan)" })),
     el("td", { textContent: p.nickname }),
     el("td", { class: "dim", textContent: p.platform || "—" }),
     el("td", { class: "wrap dim", textContent: (p.scores || []).map((s) => `${MODES[s.mode] || s.mode}: ${fmtNum(s.score)}`).join(" · ") || "—" }),
     el("td", { class: "dim", textContent: fmtDate(p.last_seen) }),
     el("td", { class: "dim", textContent: fmtDate(p.created_at) }),
-    el("td", {}, p.banned ? el("span", { class: "tag ban", textContent: "engelli" }) : el("span", { class: "tag on", textContent: "aktif" })),
+    el("td", { class: "wrap" }, banTag(p)),
     el("td", {}, el("div", { class: "row" },
       btn("İsim", () => renamePlayer(p)),
-      btn(p.banned ? "Engeli kaldır" : "Engelle", () => setBan(p, !p.banned), p.banned ? "small ok" : "small danger"),
+      btn("Skorlar", () => scoresDialog(p)),
+      btn("Hediye", () => { show("gifts"); $("gTo").value = p.public_id || ""; }),
+      btn("Mesaj", () => messageDialog(p)),
+      banActive(p) ? btn("Banı kaldır", () => unban(p), "small ok") : btn("Banla", () => banDialog(p), "small danger"),
       btn("Sil", () => deletePlayer(p), "small danger"))),
   )));
 }
@@ -268,16 +341,99 @@ async function renamePlayer(p) {
   if (!n || n.trim() === p.nickname) return;
   const name = n.trim();
   if (name.length < 3 || name.length > 16) return say("İsim 3–16 karakter olmalı.", true);
-  check(await sb.from("players").update({ nickname: name }).eq("id", p.id));
+  const res = await sb.from("players").update({ nickname: name }).eq("id", p.id);
+  if (res.error && res.error.code === "23505") return say(`"${name}" başka bir oyuncuda var.`, true);
+  check(res);
   say(`İsim "${name}" olarak değiştirildi.`);
   refreshCurrent();
 }
-async function setBan(p, banned) {
-  if (banned && !confirm(`"${p.nickname}" engellensin mi? Sıralamadan gizlenir, skor gönderemez, isim değiştiremez.`)) return;
-  check(await sb.from("players").update({ banned }).eq("id", p.id));
-  say(banned ? `"${p.nickname}" engellendi.` : `"${p.nickname}" engeli kaldırıldı.`);
+// ---- uzaklaştırma (süreli / süresiz) ve mesaj pencereleri
+const banActive = (p) => p.banned && (!p.banned_until || new Date(p.banned_until) > new Date());
+function banTag(p) {
+  if (banActive(p)) {
+    const until = p.banned_until ? `${fmtDate(p.banned_until)} tarihine kadar` : "süresiz";
+    return el("span", {}, el("span", { class: "tag ban", textContent: "banlı · " + until }), p.ban_reason ? el("div", { class: "dim", textContent: p.ban_reason, style: "font-size:12px" }) : "");
+  }
+  if (p.banned) return el("span", { class: "tag off", textContent: "ban süresi doldu" });
+  return el("span", { class: "tag on", textContent: "aktif" });
+}
+function modal(title, fields, okText, onOk) {
+  const box = el("div", { id: "modal" }, el("div", { class: "card" }, el("h3", { textContent: title, style: "margin-top:0" }), ...fields,
+    el("div", { class: "row", style: "margin-top:14px;justify-content:flex-end" },
+      btn("Vazgeç", () => box.remove(), ""),
+      btn(okText, async () => { if (await onOk() !== false) box.remove(); }, "ok"))));
+  box.addEventListener("click", (e) => { if (e.target === box) box.remove(); });
+  document.body.append(box);
+}
+const DURATIONS = [["1 saat", 1], ["1 gün", 24], ["3 gün", 72], ["7 gün", 168], ["30 gün", 720], ["Süresiz", 0], ["Özel tarih…", -1]];
+function banDialog(p) {
+  const dur = el("select", {}, ...DURATIONS.map(([t, h]) => el("option", { value: String(h), textContent: t })));
+  dur.value = "24";
+  const custom = el("input", { type: "datetime-local", class: "hidden" });
+  dur.onchange = () => custom.classList.toggle("hidden", dur.value !== "-1");
+  const reason = el("input", { placeholder: "Sebep (oyuncu görür) — ör. Uygunsuz isim", maxLength: 120 });
+  modal(`"${p.nickname}" banla`, [
+    el("p", { class: "dim", textContent: "Banlı oyuncu sıralamada görünmez, skor gönderemez, isim değiştiremez. Süre dolunca ban kendiliğinden kalkar. Oyuncu sebebi ve bitiş tarihini oyundaki MESAJLAR ekranında görür.", style: "margin-top:0" }),
+    el("label", { textContent: "Süre" }), dur, custom,
+    el("label", { textContent: "Sebep" }), reason,
+  ], "Banla", async () => {
+    let until = null;
+    const h = Number(dur.value);
+    if (h > 0) until = new Date(Date.now() + h * 3600 * 1000).toISOString();
+    if (h === -1) {
+      if (!custom.value) { alert("Bitiş tarihini seç."); return false; }
+      until = new Date(custom.value).toISOString();
+    }
+    check(await sb.from("players").update({ banned: true, banned_until: until, ban_reason: reason.value.trim() }).eq("id", p.id));
+    say(`"${p.nickname}" banlandı (${until ? fmtDate(until) + " tarihine kadar" : "süresiz"}).`);
+    refreshCurrent();
+  });
+}
+async function unban(p) {
+  check(await sb.from("players").update({ banned: false, banned_until: null, ban_reason: "" }).eq("id", p.id));
+  say(`"${p.nickname}" banı kaldırıldı.`);
   refreshCurrent();
 }
+function messageDialog(p) {
+  const title = el("input", { placeholder: "Başlık (isteğe bağlı)", maxLength: 60 });
+  const body = el("textarea", { placeholder: "Mesaj (sadece bu oyuncu görür)", maxLength: 500 });
+  modal(`"${p.nickname}" adlı oyuncuya mesaj`, [el("label", { textContent: "Başlık" }), title, el("label", { textContent: "Mesaj" }), body], "Gönder", async () => {
+    if (!body.value.trim()) { alert("Mesaj boş olamaz."); return false; }
+    check(await sb.from("player_messages").insert({ player_id: p.id, title: title.value.trim(), body: body.value.trim() }));
+    say(`Mesaj "${p.nickname}" adlı oyuncuya gönderildi. Oyunu bir sonraki açışında görür.`);
+  });
+}
+
+// ---- mesajlar sekmesi (herkese / kişiye özel)
+async function loadMsgs() {
+  const rows = check(await sb.from("player_messages").select("id,title,body,created_at,expires_at,player:players(nickname)").order("created_at", { ascending: false }).limit(200));
+  $("mList").replaceChildren(...rows.map((m) => el("tr", {},
+    el("td", {}, m.player ? m.player.nickname : el("span", { class: "tag on", textContent: "herkese" })),
+    el("td", { textContent: m.title || "—" }),
+    el("td", { class: "wrap", textContent: m.body }),
+    el("td", { class: "dim", textContent: fmtDate(m.created_at) }),
+    el("td", { class: "dim", textContent: fmtDate(m.expires_at) }),
+    el("td", {}, btn("Sil", async () => { if (!confirm("Mesaj silinsin mi? (Oyuncunun gelen kutusundan da kalkar)")) return; check(await sb.from("player_messages").delete().eq("id", m.id)); loadMsgs(); }, "small danger")),
+  )));
+  if (!rows.length) $("mList").replaceChildren(el("tr", {}, el("td", { colSpan: 6, class: "dim", textContent: "Henüz mesaj yok." })));
+}
+$("mSend").onclick = async () => {
+  const body = $("mBody").value.trim();
+  if (!body) return say("Mesaj boş olamaz.", true);
+  const to = $("mTo").value.trim();
+  let player_id = null;
+  if (to) {
+    const found = check(await sb.from("players").select("id,nickname").ilike("nickname", to.replace(/[%_\\]/g, (c) => "\\" + c)).limit(2));
+    if (found.length !== 1) return say(`"${to}" adında oyuncu bulunamadı.`, true);
+    player_id = found[0].id;
+  } else if (!confirm("Bu mesaj TÜM oyunculara gidecek. Emin misin?")) return;
+  const row = { player_id, title: $("mTitle").value.trim(), body, expires_at: $("mExpires").value ? new Date($("mExpires").value).toISOString() : null };
+  check(await sb.from("player_messages").insert(row));
+  say(player_id ? `Mesaj "${to}" adlı oyuncuya gönderildi.` : "Mesaj herkese gönderildi.");
+  $("mBody").value = ""; $("mTitle").value = ""; $("mTo").value = ""; $("mExpires").value = "";
+  loadMsgs();
+};
+
 async function deletePlayer(p) {
   if (!confirm(`"${p.nickname}" ve tüm skorları KALICI olarak silinsin mi?\n(Oyunu tekrar açarsa yeni bir otomatik isimle başlar. Kalıcı engel için "Engelle"yi kullan.)`)) return;
   check(await sb.from("players").delete().eq("id", p.id));
@@ -288,11 +444,11 @@ async function deletePlayer(p) {
 // ---- sıralama (mod bazında, skor silme)
 async function loadBoard() {
   const mode = $("bMode").value;
-  const rows = check(await sb.from("scores").select("player_id,score,duration,updated_at,players(nickname,banned)")
+  const rows = check(await sb.from("scores").select("player_id,score,duration,updated_at,players(nickname,public_id,banned)")
     .eq("mode", mode).order("score", { ascending: false }).limit(100));
   $("bBody").replaceChildren(...rows.map((s, i) => el("tr", {},
     el("td", { class: "dim", textContent: "#" + (i + 1) }),
-    el("td", {}, s.players?.nickname ?? "?", s.players?.banned ? el("span", { class: "tag ban", textContent: " engelli", style: "margin-left:6px" }) : ""),
+    el("td", {}, s.players?.nickname ?? "?", el("code", { textContent: " " + (s.players?.public_id ?? ""), style: "color:var(--dim);font-size:12px" }), s.players?.banned ? el("span", { class: "tag ban", textContent: " engelli", style: "margin-left:6px" }) : ""),
     el("td", { textContent: fmtNum(s.score) }),
     el("td", { class: "dim", textContent: Math.round(s.duration) + " sn" }),
     el("td", { class: "dim", textContent: fmtDate(s.updated_at) }),
@@ -321,7 +477,7 @@ async function loadReports() {
     el("td", {}, el("span", { class: "tag " + (r.resolved ? "off" : "on"), textContent: r.resolved ? "çözüldü" : "açık" })),
     el("td", {}, el("div", { class: "row" },
       r.target ? btn("İsim", () => renamePlayer(r.target)) : "",
-      r.target && !r.target.banned ? btn("Engelle", () => setBan(r.target, true), "small danger") : "",
+      r.target && !r.target.banned ? btn("Banla", () => banDialog(r.target), "small danger") : "",
       !r.resolved ? btn("Çözüldü", async () => { check(await sb.from("reports").update({ resolved: true }).eq("id", r.id)); loadReports(); }, "small ok") : "",
       btn("Sil", async () => { check(await sb.from("reports").delete().eq("id", r.id)); loadReports(); }, "small danger"))),
   )));
@@ -382,6 +538,108 @@ $("wAdd").onclick = async () => {
   $("wNew").value = "";
   loadWords();
 };
+
+// ---- skorlar: her moddaki skor + sıra, elle düzenleme (ID değiştirilemez)
+async function scoresDialog(p) {
+  const ranks = check(await sb.rpc("admin_player_ranks", { p_player: p.id }));
+  const byMode = Object.fromEntries((ranks || []).map((r) => [r.mode, r]));
+  const inputs = {};
+  const rows = Object.entries(MODES).map(([mode, name]) => {
+    const r = byMode[mode];
+    inputs[mode] = el("input", { type: "number", min: 0, step: 1, value: r ? r.score : "", placeholder: "skor yok", style: "width:140px" });
+    return el("div", { class: "row", style: "justify-content:space-between;margin:6px 0" },
+      el("span", { textContent: name, style: "min-width:90px" }),
+      el("span", { class: "dim", textContent: r ? `#${fmtNum(r.rank)} / ${fmtNum(r.total)}` : "—", style: "min-width:90px" }),
+      inputs[mode]);
+  });
+  modal(`${p.nickname} · ${p.public_id || ""}`, [
+    el("p", { class: "dim", textContent: "Oyuncu ID'si değiştirilemez. Skoru değiştirirsen sıralama hemen güncellenir; boş bırakılan mod silinir.", style: "margin-top:0" }),
+    ...rows,
+  ], "Kaydet", async () => {
+    for (const [mode, inp] of Object.entries(inputs)) {
+      const v = inp.value.trim();
+      const had = !!byMode[mode];
+      if (v === "") {
+        if (had) check(await sb.from("scores").delete().eq("player_id", p.id).eq("mode", mode));
+        continue;
+      }
+      const score = Math.max(0, Math.floor(Number(v)));
+      if (!Number.isFinite(score)) { alert(`${MODES[mode]}: geçersiz sayı`); return false; }
+      if (had && byMode[mode].score === score) continue;
+      check(await sb.from("scores").upsert({ player_id: p.id, mode, score, updated_at: new Date().toISOString() }, { onConflict: "player_id,mode" }));
+    }
+    say(`${p.nickname} skorları güncellendi.`);
+    refreshCurrent();
+  });
+}
+
+// ---- özel top hediyesi
+const G_SLIDERS = [["glow", "Parlaklık", 0, 4, 0.1, 2.0], ["emissive", "Desen ışığı", 0, 1.5, 0.05, 0.6], ["shimmer", "Kayan ışık", 0, 1, 0.05, 0.6],
+  ["sparkle", "Yıldız pırıltısı", 0, 1, 0.05, 0.6], ["pulse", "Nabız", 0, 1, 0.05, 0.3], ["prism", "Gökkuşağı (renk döner)", 0, 1, 0.05, 0]];
+$("gSliders").replaceChildren(...G_SLIDERS.map(([k, t, mn, mx, st, v]) => el("label", { class: "dim", style: "display:block;margin-top:6px" }, t + " ",
+  el("input", { type: "range", id: "g_" + k, min: mn, max: mx, step: st, value: v, style: "width:100%", on: { input: drawGift } }))));
+["gBase", "gPat", "gRim", "gTextColor", "gTrail", "gPattern", "gText", "gName"].forEach((id) => $(id).addEventListener("input", drawGift));
+function giftDesign() {
+  const d = { base: $("gBase").value, pattern_color: $("gPat").value, rim: $("gRim").value, text_color: $("gTextColor").value,
+    trail: $("gTrail").value, pattern: Number($("gPattern").value), text: $("gText").value.trim() };
+  for (const [k] of G_SLIDERS) d[k] = Number($("g_" + k).value);
+  return d;
+}
+let gT = 0;
+function drawGift() {
+  const d = giftDesign(), c = $("gPreview"), x = c.getContext("2d"), cx = 130, cy = 130, r = 78;
+  x.clearRect(0, 0, 260, 260);
+  const hue = (hex, t) => d.prism > 0 ? `hsl(${(t * 60) % 360}, 90%, 60%)` : hex;
+  const g = x.createRadialGradient(cx, cy, r * 0.8, cx, cy, r * (1.25 + d.glow * 0.15));
+  g.addColorStop(0, d.rim + "aa"); g.addColorStop(1, d.rim + "00");
+  x.fillStyle = g; x.beginPath(); x.arc(cx, cy, r * 1.7, 0, 7); x.fill();
+  x.fillStyle = d.base; x.beginPath(); x.arc(cx, cy, r, 0, 7); x.fill();
+  x.save(); x.beginPath(); x.arc(cx, cy, r, 0, 7); x.clip();
+  x.strokeStyle = x.fillStyle = hue(d.pattern_color, gT + 2); x.lineWidth = 7; x.globalAlpha = 0.6 + d.emissive * 0.3;
+  if (d.pattern === 0) for (let i = -2; i <= 2; i++) { x.beginPath(); x.moveTo(cx - r, cy + i * 30); x.lineTo(cx + r, cy + i * 30); x.stroke(); }
+  if (d.pattern === 1) for (let i = -3; i <= 3; i++) { x.beginPath(); x.moveTo(cx - r, cy + i * 24); x.lineTo(cx + r, cy + i * 24); x.moveTo(cx + i * 24, cy - r); x.lineTo(cx + i * 24, cy + r); x.stroke(); }
+  if (d.pattern === 2) for (let i = 1; i <= 3; i++) { x.beginPath(); x.arc(cx, cy, i * 22, gT, gT + 3.5); x.stroke(); }
+  if (d.pattern === 3) for (let i = 0; i < 9; i++) { x.beginPath(); x.arc(cx + Math.cos(i * 2.4) * (i * 8), cy + Math.sin(i * 2.4) * (i * 8), 9, 0, 7); x.fill(); }
+  if (d.pattern === 5) for (const rr of [28, 58]) { x.beginPath(); for (let k = 0; k <= 6; k++) x.lineTo(cx + Math.cos(k * 1.047) * rr, cy + Math.sin(k * 1.047) * rr); x.stroke(); }
+  if (d.pattern === 6) { x.lineWidth = 4; for (let i = 0; i < 6; i++) { const a = i * 1.05; x.beginPath(); x.moveTo(cx, cy); x.lineTo(cx + Math.cos(a) * 45, cy + Math.sin(a) * 45); x.lineTo(cx + Math.cos(a + 0.5) * 85, cy + Math.sin(a + 0.5) * 85); x.stroke(); } }
+  if (d.pattern === 7) for (let i = 0; i < 30; i++) { x.beginPath(); x.arc(cx + Math.cos(i * 2.399) * Math.sqrt(i / 30) * r, cy + Math.sin(i * 2.399) * Math.sqrt(i / 30) * r, 2 + (i % 3), 0, 7); x.fill(); }
+  x.globalAlpha = 1;
+  if (d.shimmer > 0) { x.strokeStyle = `rgba(255,255,255,${0.35 * d.shimmer})`; x.lineWidth = 12; const s = ((gT * 40) % 260) - 130; x.beginPath(); x.moveTo(cx - r + s, cy + r); x.lineTo(cx + s, cy - r); x.stroke(); }
+  x.restore();
+  if (d.sparkle > 0) for (let i = 0; i < 4; i++) { const a = Math.max(0, Math.sin(gT * 3 + i * 1.7)) ** 6 * d.sparkle; if (a < 0.05) continue; const px = cx + Math.cos(i * 2.1) * 45, py = cy + Math.sin(i * 2.9) * 45; x.strokeStyle = `rgba(255,255,255,${a})`; x.lineWidth = 2; x.beginPath(); x.moveTo(px - 12 * a, py); x.lineTo(px + 12 * a, py); x.moveTo(px, py - 12 * a); x.lineTo(px, py + 12 * a); x.stroke(); }
+  if (d.text) { const fs = Math.min(40, Math.max(14, 250 / d.text.length)); x.font = `bold ${fs}px sans-serif`; x.textAlign = "center"; x.textBaseline = "middle"; x.lineWidth = 5; x.strokeStyle = "rgba(0,0,0,.7)"; x.strokeText(d.text, cx, cy); x.fillStyle = d.text_color; x.fillText(d.text, cx, cy); }
+  x.strokeStyle = d.rim; x.lineWidth = 3 + d.glow * (1 + 0.3 * d.pulse * Math.sin(gT * 5)); x.beginPath(); x.arc(cx, cy, r, 0, 7); x.stroke();
+}
+setInterval(() => { gT += 0.05; if (!document.querySelector('[data-view="gifts"]').classList.contains("hidden")) drawGift(); }, 50);
+
+$("gSend").onclick = async () => {
+  const to = $("gTo").value.trim().toUpperCase();
+  const name = $("gName").value.trim();
+  if (!to) return say("Alıcı oyuncu ID'sini yaz (Oyuncular sekmesinde görünür).", true);
+  if (!name) return say("Topa bir isim ver.", true);
+  const found = check(await sb.from("players").select("id,nickname,public_id").eq("public_id", to).limit(1));
+  if (!found.length) return say(`${to} ID'li oyuncu bulunamadı.`, true);
+  if (!confirm(`"${name}" topu ${found[0].nickname} (${to}) adlı oyuncuya hediye edilsin mi?`)) return;
+  check(await sb.from("custom_balls").insert({ player_id: found[0].id, name, design: giftDesign(), note: $("gNote").value.trim() }));
+  say(`"${name}" topu ${found[0].nickname} adlı oyuncuya hediye edildi. Oyunu bir sonraki açışında görür.`);
+  loadGifts();
+};
+async function loadGifts() {
+  drawGift();
+  const rows = check(await sb.from("custom_balls").select("id,name,design,note,revoked,created_at,player:players(nickname,public_id)").order("created_at", { ascending: false }).limit(200));
+  $("gList").replaceChildren(...rows.map((g) => el("tr", {},
+    el("td", {}, g.player ? `${g.player.nickname} ` : "?", el("code", { textContent: g.player?.public_id ?? "", style: "color:var(--dim);font-size:12px" })),
+    el("td", {}, el("span", { style: `display:inline-block;width:14px;height:14px;border-radius:50%;vertical-align:middle;margin-right:6px;background:${g.design?.base};box-shadow:0 0 8px ${g.design?.rim}` }), g.name),
+    el("td", { textContent: g.design?.text || "—" }),
+    el("td", { class: "wrap dim", textContent: g.note || "—" }),
+    el("td", { class: "dim", textContent: fmtDate(g.created_at) }),
+    el("td", {}, el("span", { class: "tag " + (g.revoked ? "off" : "on"), textContent: g.revoked ? "geri alındı" : "oyuncuda" })),
+    el("td", {}, el("div", { class: "row" },
+      btn(g.revoked ? "Geri ver" : "Geri al", async () => { check(await sb.from("custom_balls").update({ revoked: !g.revoked }).eq("id", g.id)); loadGifts(); }, g.revoked ? "small ok" : "small"),
+      btn("Sil", async () => { if (!confirm("Hediye top kalıcı silinsin mi?")) return; check(await sb.from("custom_balls").delete().eq("id", g.id)); loadGifts(); }, "small danger"))),
+  )));
+  if (!rows.length) $("gList").replaceChildren(el("tr", {}, el("td", { colSpan: 7, class: "dim", textContent: "Henüz hediye yok." })));
+}
 
 function refreshCurrent() {
   const tab = document.querySelector("#tabs button.on")?.dataset.tab || "dash";
