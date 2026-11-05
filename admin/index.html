@@ -92,6 +92,7 @@
     <p class="msg" id="msg"></p>
 
     <div data-view="dash">
+      <div class="card" id="reminders"></div>
       <div class="stats" id="stats"></div>
     </div>
 
@@ -647,6 +648,27 @@ function refreshCurrent() {
 }
 
 start();
+</script>
+<script>
+// Hatırlatıcılar (Özet sekmesi): son tarihe 60 gün kala sarı, 14 gün kala kırmızı olur.
+const REMINDERS = [
+  { due: '2027-02-01', title: 'Google Play: Satıcı (tüccar) durumunu beyan et',
+    body: 'Beyan edilmezse oyun Google Play\'den dünya genelinde kaldırılır. Play Console → Hesap ayrıntıları → "Satıcı durumunuzu beyan edin". Satıcı olunca AB\'de adres herkese açık görünür: önce sanal ofis adresi al ve Google ödeme profilindeki adresi onunla değiştir (ev adresi görünmesin).',
+    link: 'https://play.google.com/console/u/0/developers/7440586149410633906/account/developer-details?tab=aboutYou' },
+];
+(function renderReminders() {
+  const box = document.getElementById('reminders');
+  const day = 864e5, now = Date.now();
+  box.innerHTML = '<h3 style="margin-top:0">Hatırlatıcılar</h3>' + REMINDERS.map(r => {
+    const left = Math.ceil((new Date(r.due + 'T00:00:00').getTime() - now) / day);
+    const color = left <= 14 ? 'var(--red)' : left <= 60 ? 'var(--gold)' : 'var(--green)';
+    const when = left < 0 ? `${-left} gün GECİKTİ` : `${left} gün kaldı`;
+    return `<div style="border-left:3px solid ${color};padding:6px 12px;margin:8px 0">
+      <b>${r.title}</b> <span class="tag" style="color:${color};border-color:${color}">${r.due} · ${when}</span>
+      <div class="dim" style="margin-top:4px">${r.body}</div>
+      <a href="${r.link}" target="_blank" rel="noopener" style="color:var(--cyan)">Play Console'da aç ↗</a></div>`;
+  }).join('');
+})();
 </script>
 </body>
 </html>
